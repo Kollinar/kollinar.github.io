@@ -1,7 +1,338 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Лабиринт 18x18</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      background-color: #f5f5f5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(18, 20px);
+      gap: 2px;
+      margin-bottom: 1rem;
+    }
+    .cell {
+      width: 20px;
+      height: 20px;
+      border: 1px solid #ccc;
+    }
+    .unknown { background-color: #888; }
+    .wall { background-color: black; }
+    .path { background-color: #ccc; }
+    .visited { background-color: #999; }
+    .player { background-color: red; }
+    .exit { background-color: yellow; }
+    .source { background-color: green; }
+    button { margin: 5px; }
+  </style>
+</head>
 <body>
-<?php
-echo "TanaevBest" ?>
+  <h1>Лабиринт</h1>
+  <div id="maze" class="grid"></div>
+  
+  <div>
+    <button onclick="move(-1, 0)">Север</button>
+    <button onclick="move(1, 0)">Юг</button>
+    <button onclick="move(0, -1)">Запад</button>
+    <button onclick="move(0, 1)">Восток</button>
+  </div>
+  
+  <div>
+    <button onclick="markExit()">Обозначить выход</button>
+    <button onclick="markSource()">Источник</button>
+    <button onclick="resetGame()">Сброс</button>
+  </div>
+  
+  <script>
+
+  // Добавь свои лабиринты в mazeOptions (каждый 18x18 массив, 0 - проход, 1 - стена)
+const mazeOptions = [
+	        // Лабиринт 1
+    [
+		[1,0,1,0,1,0,0,0,0,0,0,1,0,1,1,0,1,1],
+		[0,0,0,0,1,1,1,0,1,1,0,0,0,0,0,0,0,1],
+		[1,0,1,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0],
+		[1,0,1,1,1,1,1,0,0,0,0,1,0,1,1,1,1,0],
+		[0,0,0,0,0,0,1,1,0,1,0,1,0,1,0,1,0,0],
+		[0,1,1,1,0,0,0,1,0,1,1,1,0,0,0,1,1,0],
+		[0,0,1,0,0,1,0,1,0,0,1,0,0,1,0,0,0,0],
+		[1,1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
+		[0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
+		[1,0,1,1,0,1,1,1,0,0,1,0,0,1,1,0,1,1],
+		[1,0,1,0,0,0,0,1,1,0,1,1,0,0,0,0,1,0],
+		[0,0,1,1,1,1,0,0,1,0,0,1,1,1,1,0,0,0],
+		[1,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,1,1],
+		[1,1,1,0,1,1,0,0,0,1,1,0,1,1,1,0,1,0],
+		[0,0,1,0,0,1,1,1,0,0,1,0,0,0,1,0,1,0],
+		[1,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0],
+		[0,0,0,0,1,0,0,1,1,0,1,0,1,1,0,1,1,0],
+		[0,0,1,0,1,1,0,0,1,0,0,0,0,0,0,0,1,0]
+     ],
+    // Лабиринты 2
+	[
+		[0,0,0,1,1,0,0,0,1,0,1,0,0,0,0,0,0,0],
+		[0,1,0,0,1,0,1,0,1,0,1,1,1,0,1,1,1,0],
+		[1,1,0,1,1,0,1,0,0,0,0,0,0,0,0,1,0,0],
+		[0,1,0,0,0,0,1,1,0,1,0,1,1,1,0,1,1,0],
+		[0,0,0,1,1,0,0,1,1,1,0,1,0,1,0,0,1,0],
+		[1,0,1,1,0,0,0,0,0,1,0,1,0,1,1,0,0,0],
+		[0,0,1,0,0,1,1,1,0,1,0,1,0,0,0,0,1,0],
+		[1,0,1,1,0,1,0,1,0,0,0,1,0,1,0,1,1,0],
+		[0,0,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,0],
+		[0,1,1,1,0,1,0,0,0,1,1,1,1,1,0,1,1,0],
+		[0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0],
+		[1,0,1,0,0,1,1,1,1,0,1,1,1,0,1,1,1,1],
+		[1,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0],
+		[0,0,0,0,1,0,0,1,1,1,1,0,1,0,1,0,0,0],
+		[1,1,1,0,1,1,0,1,0,0,1,0,1,1,1,0,1,1],
+		[1,0,0,0,0,0,0,1,0,1,1,0,1,0,0,0,0,0],
+		[0,0,1,1,0,1,0,0,0,0,1,0,1,1,0,1,0,1],
+		[1,0,0,1,0,1,1,0,1,0,0,0,0,1,1,1,0,0]
+	],
+		//Лабиринт 3
+	[
+		[1,0,0,0,0,0,1,0,1,0,1,0,0,1,1,0,0,0],
+		[1,1,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0],
+		[0,0,0,0,1,0,1,0,1,0,1,1,0,1,1,0,1,1],
+		[1,1,1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0],
+		[1,0,0,0,1,1,1,0,1,0,1,1,1,0,0,0,1,1],
+		[1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0],
+		[0,0,1,1,1,0,0,0,0,0,1,1,0,1,1,0,1,0],
+		[0,0,0,0,0,0,1,0,1,1,1,0,0,0,1,0,0,0],
+		[0,1,1,1,0,0,1,0,0,0,0,0,1,1,1,0,0,1],
+		[0,0,0,1,0,1,1,1,1,0,1,0,1,0,1,1,0,1],
+		[1,1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,0,0],
+		[0,0,0,1,0,0,0,0,0,1,1,0,1,0,1,0,1,1],
+		[0,1,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,1],
+		[0,1,1,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1],
+		[0,0,1,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0],
+		[1,0,1,0,1,0,1,0,1,1,0,0,0,1,0,1,0,0],
+		[1,0,1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1],
+		[0,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0]
+	],
+	//Лабиринт 4
+	[
+		[1,1,1,0,0,1,0,1,1,0,1,1,0,0,1,0,1,0],
+		[1,0,1,1,0,1,0,1,0,0,0,1,0,1,1,0,0,0],
+		[0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1],
+		[1,0,1,0,1,1,0,1,1,1,0,1,1,0,0,0,0,0],
+		[1,0,0,0,0,0,0,0,1,0,0,0,1,1,0,1,0,0],
+		[0,0,1,0,1,0,1,0,1,1,1,0,1,0,0,0,0,1],
+		[0,1,1,1,1,0,1,0,0,0,1,0,1,0,1,1,0,0],
+		[0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,1,0,1],
+		[1,0,1,0,0,0,1,0,1,0,1,0,1,1,0,1,0,0],
+		[1,0,1,1,1,0,1,0,0,0,1,0,0,1,0,1,0,1],
+		[0,0,0,1,0,0,0,0,1,1,1,0,1,1,0,0,0,1],
+		[0,1,1,1,1,1,1,0,1,0,1,0,1,0,0,1,0,0],
+		[0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+		[1,0,1,1,1,0,1,1,1,0,1,0,0,0,1,1,0,0],
+		[0,0,0,1,0,0,0,0,0,0,1,1,0,0,1,0,0,1],
+		[1,0,1,1,1,0,1,0,1,0,0,1,1,0,0,0,1,1],
+		[1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0],
+		[0,0,1,0,1,0,1,0,0,0,1,1,0,1,1,0,1,0]
+	],
+	//Лабиринт 5
+	[
+		[0,0,1,0,0,0,1,1,0,1,1,0,0,1,0,1,0,0],
+		[1,0,1,0,1,0,0,0,0,0,1,0,1,1,0,1,1,0],
+		[0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0],
+		[0,0,1,1,1,0,1,1,1,1,1,1,0,1,1,0,0,0],
+		[0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1],
+		[0,0,1,0,1,0,1,0,1,1,0,1,1,0,1,0,0,0],
+		[1,0,1,1,1,0,1,1,1,0,0,0,1,0,1,0,1,0],
+		[0,0,0,1,0,0,0,0,1,1,1,0,1,1,1,0,1,0],
+		[1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,1],
+		[0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,1,0],
+		[0,0,0,1,0,1,0,1,0,0,0,0,0,1,0,0,0,0],
+		[0,1,0,0,0,1,0,1,1,1,0,1,0,1,0,1,1,0],
+		[1,1,0,1,0,0,0,0,0,0,0,1,1,1,0,0,1,1],
+		[0,0,0,1,1,1,0,1,0,1,0,0,0,0,0,0,0,1],
+		[0,0,1,1,0,0,0,1,1,1,0,1,0,1,0,1,0,0],
+		[1,0,1,0,0,1,0,1,0,0,0,0,0,1,0,1,1,1],
+		[0,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,0,0],
+		[0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1]
+	]
+    ];
+
+let maze = [];
+let playerMoves = []; // запоминаем движения в виде [dx, dy]
+let cumulativePath = [[9, 9]]; // Начальная точка установлена в центр карты (9,9)
+let matchedMaze = null;
+let labyrinthStartCandidate = null; // найденная начальная позиция на лабиринте
+
+function initMaze() {
+    // Инициализация пустой карты
+    maze = Array(18).fill().map(() => Array(18).fill(0));
+    playerMoves = [];
+    // Устанавливаем начальную точку в центр карты (9,9)
+    cumulativePath = [[9, 9]];
+    matchedMaze = null;
+    labyrinthStartCandidate = null;
+    render();
+}
+
+
+function move(dx, dy) {
+    let curr = cumulativePath[cumulativePath.length - 1];
+    let next = [curr[0] + dx, curr[1] + dy];
+    
+    // Отдельная проверка для режима совпавшего лабиринта
+    if (matchedMaze && labyrinthStartCandidate) {
+        // Рассчитываем абсолютные координаты в реальном лабиринте
+        const absX = labyrinthStartCandidate[0] + (next[0] - 9);
+        const absY = labyrinthStartCandidate[1] + (next[1] - 9);
+        
+        // Проверяем выход за границы реального лабиринта и наличие стены
+        if (absX < 0 || absX >= 18 || 
+            absY < 0 || absY >= 18 ||
+            matchedMaze[absX][absY] === 1) {
+            return;
+        }
+    } else {
+        // Проверка границ пустой карты только в режиме исследования
+        if (next[0] < 0 || next[0] >= 18 || 
+            next[1] < 0 || next[1] >= 18) {
+            return;
+        }
+    }
+
+    playerMoves.push([dx, dy]);
+    cumulativePath.push(next);
+    checkMatch();
+    render();
+}
+
+function checkMatch() {
+    if (matchedMaze) return;
+    const candidates = [];
+
+    mazeOptions.forEach(option => {
+        for (let i = 0; i < 18; i++) {
+            for (let j = 0; j < 18; j++) {
+                let valid = true;
+                
+                for (const [dx, dy] of cumulativePath) {
+                    // Корректируем координаты относительно центра
+                    const x = i + (dx - 9);
+                    const y = j + (dy - 9);
+                    
+                    if (x < 0 || x >= 18 || 
+                        y < 0 || y >= 18 || 
+                        option[x][y] !== 0) {
+                        valid = false;
+                        break;
+                    }
+                }
+                
+                if (valid) candidates.push({ maze: option, start: [i, j] });
+            }
+        }
+    });
+
+    if (candidates.length === 1) {
+        matchedMaze = candidates[0].maze;
+        labyrinthStartCandidate = candidates[0].start;
+        render(); // Перерисовываем после совпадения
+    }
+}
+
+function markExit() {
+    if (!matchedMaze || !labyrinthStartCandidate) return;
+    let last = cumulativePath[cumulativePath.length - 1];
+    let absPos = [labyrinthStartCandidate[0] + last[0], labyrinthStartCandidate[1] + last[1]];
+    
+    // Проверяем, что позиция внутри карты
+    if (absPos[0] >= 0 && absPos[0] < 18 && absPos[1] >= 0 && absPos[1] < 18) {
+        matchedMaze[absPos[0]][absPos[1]] = 3; // Устанавливаем источник
+        render();
+    }
+}
+
+function markSource() {
+        if (!matchedMaze || !labyrinthStartCandidate) return;
+    let last = cumulativePath[cumulativePath.length - 1];
+    let absPos = [labyrinthStartCandidate[0] + last[0], labyrinthStartCandidate[1] + last[1]];
+    
+    // Проверяем, что позиция внутри карты
+    if (absPos[0] >= 0 && absPos[0] < 18 && absPos[1] >= 0 && absPos[1] < 18) {
+        matchedMaze[absPos[0]][absPos[1]] = 3; // Устанавливаем источник
+        render();
+    }
+}
+
+function resetGame() {
+    initMaze();
+}
+
+function render() {
+    const mazeEl = document.getElementById("maze");
+    mazeEl.innerHTML = "";
+    let grid = [];
+
+    // Создаем пустую сетку
+    for (let i = 0; i < 18; i++) {
+        grid[i] = [];
+        for (let j = 0; j < 18; j++) {
+            let div = document.createElement("div");
+            div.className = "cell unknown";
+            grid[i][j] = div;
+            mazeEl.appendChild(div);
+        }
+    }
+
+    if (matchedMaze && labyrinthStartCandidate) {
+        // Отрисовываем найденный лабиринт
+        for (let i = 0; i < 18; i++) {
+            for (let j = 0; j < 18; j++) {
+                let cell = grid[i][j];
+                switch(matchedMaze[i][j]) {
+                    case 1: cell.className = "cell wall"; break;
+                    case 2: cell.className = "cell exit"; break;
+                    case 3: cell.className = "cell source"; break;
+                    default: cell.className = "cell path";
+                }
+            }
+        }
+
+        // Отрисовываем пройденный путь
+        cumulativePath.forEach(([dx, dy]) => {
+            let x = labyrinthStartCandidate[0] + (dx - 9);
+            let y = labyrinthStartCandidate[1] + (dy - 9);
+            if (x >= 0 && x < 18 && y >= 0 && y < 18) {
+                grid[x][y].className = "cell visited";
+            }
+        });
+
+        // Отрисовываем текущую позицию игрока
+        let [lastDx, lastDy] = cumulativePath[cumulativePath.length - 1];
+        let px = labyrinthStartCandidate[0] + (lastDx - 9);
+        let py = labyrinthStartCandidate[1] + (lastDy - 9);
+        if (px >= 0 && px < 18 && py >= 0 && py < 18) {
+            grid[px][py].className = "cell player";
+        }
+    } else {
+        // Режим исследования без совпадений
+        cumulativePath.forEach(([x, y]) => {
+            if (x >= 0 && x < 18 && y >= 0 && y < 18) {
+                grid[x][y].className = "cell visited";
+            }
+        });
+        let [x, y] = cumulativePath[cumulativePath.length - 1];
+        grid[x][y].className = "cell player";
+    }
+}
+
+initMaze();
+
+  </script>
+
 </body>
 </html>
