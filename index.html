@@ -162,6 +162,30 @@ const mazeOptions = [
 	]
     ];
 
+// Добавляем обработчик клавиш
+document.addEventListener("keydown", handleKeyPress);
+
+function handleKeyPress(event) {
+    // Получаем код нажатой клавиши
+    switch (event.key) {
+        case "ArrowUp": // Стрелка вверх
+            move(-1, 0); // Движение на север
+            break;
+        case "ArrowDown": // Стрелка вниз
+            move(1, 0); // Движение на юг
+            break;
+        case "ArrowLeft": // Стрелка влево
+            move(0, -1); // Движение на запад
+            break;
+        case "ArrowRight": // Стрелка вправо
+            move(0, 1); // Движение на восток
+            break;
+        default:
+            // Если нажата другая клавиша, ничего не делаем
+            break;
+    }
+}
+	  
 let maze = [];
 let playerMoves = []; // запоминаем движения в виде [dx, dy]
 let cumulativePath = [[9, 9]]; // Начальная точка установлена в центр карты (9,9)
