@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Лабиринт 18x18</title>
-  <style>
+ <style>
     body {
       font-family: sans-serif;
       display: flex;
@@ -13,17 +13,40 @@
       padding: 1rem;
       background-color: #f5f5f5;
     }
+
+    .container {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px; /* Расстояние между правилами и картой */
+    }
+
+    .rules {
+      width: 200px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background-color: white;
+      border-radius: 5px;
+      text-align: left;
+    }
+
+    .maze-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(18, 20px);
       gap: 2px;
-      margin-bottom: 1rem;
     }
+
     .cell {
       width: 20px;
       height: 20px;
       border: 1px solid #ccc;
     }
+
     .unknown { background-color: #888; }
     .wall { background-color: black; }
     .path { background-color: #ccc; }
@@ -31,26 +54,167 @@
     .player { background-color: red; }
     .exit { background-color: yellow; }
     .source { background-color: green; }
-    button { margin: 5px; }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      width: 360px; /* Ширина равна ширине карты */
+      margin-top: 10px;
+    }
+
+    .compass {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      grid-template-columns: auto auto auto;
+      gap: 5px;
+      justify-items: center;
+    }
+
+.controls button {
+    appearance: none;
+    background-color: transparent; /* Фон кнопки */
+    border: 2px solid #e52727; /* Цвет границы */
+    border-radius: 0.6em; /* Закругление углов */
+    color: #e52727; /* Цвет текста (можно изменить здесь) */
+    cursor: pointer;
+    display: flex;
+    align-items: center; /* Выравнивание по центру */
+    justify-content: center; /* Выравнивание по центру */
+    font-size: 0.6rem; /* Размер текста (уменьшен) */
+    font-weight: 500; /* Жирность текста */
+    line-height: 1;
+    margin: 0px; /* Внешний отступ (уменьшен) */
+    padding: 0.5em 1em; /* Внутренний отступ (уменьшен) */
+    text-decoration: none;
+    text-align: center;
+    text-transform: uppercase;
+    font-family: 'Montserrat', sans-serif;
+
+    &:hover,
+    &:focus {
+        color: #fff; /* Цвет текста при наведении (можно изменить здесь) */
+        outline: 0;
+    }
+}
+
+.compass .north {
+    grid-row: 1;
+    grid-column: 2;
+    transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+}
+
+.compass .west {
+    grid-row: 2;
+    grid-column: 1;
+    transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+}
+
+.compass .east {
+    grid-row: 2;
+    grid-column: 3;
+    transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+}
+
+.compass .south {
+    grid-row: 3;
+    grid-column: 2;
+    transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+}
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+	  
+    }
+	
+	.actions .markSource {
+
+	      transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+    }
+	
+		.actions .markExit {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+	      transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+    }
+	
+		.actions .resetGame {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+	      transition: box-shadow 300ms ease-in-out, color 300ms ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0 40px 40px #e52727 inset; /* Цвет тени при наведении (можно изменить здесь) */
+    }
+    }
   </style>
 </head>
 <body>
   <h1>Лабиринт</h1>
-  <div id="maze" class="grid"></div>
-  
-  <div>
-    <button onclick="move(-1, 0)">Север</button>
-    <button onclick="move(1, 0)">Юг</button>
-    <button onclick="move(0, -1)">Запад</button>
-    <button onclick="move(0, 1)">Восток</button>
+  <div class="container">
+    <!-- Правила -->
+    <div class="rules">
+      <h3>Правила:</h3>
+      <p></p>
+      <ul>
+        <li>Используйте кнопки "Север, Юг, Запад, Восток" или <B>стрелки клавиатуры</B> для перемещения как идете в лабиринте колодца, когда пройдете несколько клеток карта определит и покажет лабирит.</li>
+        <li><B>Источник</B> отмечает на найденом лабиринте точку источника</li>
+		<li><B>Выход</B> отмечает клетки предпологаемого выхода, что бы к ним можно было вернуться</li>
+        <li>Сбросьте игру, что бы начать заного.</li>
+      </ul>
+    </div>
+
+    <!-- Контейнер с картой и кнопками -->
+    <div class="maze-container">
+      <!-- Лабиринт -->
+      <div id="maze" class="grid"></div>
+
+      <!-- Кнопки управления -->
+      <div class="controls">
+        <!-- Компас -->
+        <div class="compass">
+          <button class="north" onclick="move(-1, 0)">Север</button>
+          <button class="west" onclick="move(0, -1)">Запад</button>
+          <button class="east" onclick="move(0, 1)">Восток</button>
+          <button class="south" onclick="move(1, 0)">Юг</button>
+        </div>
+
+        <!-- Действия -->
+        <div class="actions">
+          <button class="markSource" onclick="markSource()">Источник</button>
+          <button class="markExit" onclick="markExit()">Выход</button>
+          <button class="resetGame" onclick="resetGame()">Сброс</button>
+        </div>
+      </div>
+    </div>
   </div>
-  
-  <div>
-    <button onclick="markExit()">Обозначить выход</button>
-    <button onclick="markSource()">Источник</button>
-    <button onclick="resetGame()">Сброс</button>
-  </div>
-  
   <script>
 
   // Добавь свои лабиринты в mazeOptions (каждый 18x18 массив, 0 - проход, 1 - стена)
