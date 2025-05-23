@@ -180,7 +180,19 @@ h1 {
   body {
     padding: 0; /* Убираем отступы */
   }
-
+	
+  h1 {
+    display: block; /* Показываем заголовок */
+    font-size: 1.2rem; /* Уменьшаем размер текста для мобильных */
+    text-align: center; /* Выравниваем текст по центру */
+    padding: 5px; /* Добавляем внутренний отступ */
+    background-color: #f9f9f9; /* Фон за текстом */
+    border: 1px solid #ccc; /* Легкая рамка */
+    border-radius: 5px; /* Скругление углов */
+    width: 90%; /* Занимаем 90% ширины экрана */
+    box-sizing: border-box; /* Учитываем padding в ширину */
+  }
+	
   .container {
     flex-direction: column; /* Все элементы в одну колонку */
     align-items: center; /* Центрируем все элементы */
