@@ -645,6 +645,23 @@ function render() {
             mazeEl.children[px * 18 + py].className = "cell player";
         }
     }
+	// Новое: Обновление заголовка с процентом пройденного лабиринта
+    if (matchedMaze && labyrinthStartCandidate) {
+        // Подсчет доступных клеток (где значение 0)
+        let totalAvailableCells = matchedMaze.flat().filter(cell => cell === 0).length;
+
+        // Подсчет уникальных пройденных клеток
+        let uniqueVisitedCells = new Set(cumulativePath.map(([x, y]) => `${x},${y}`)).size;
+
+        // Вычисление процента
+        let progress = ((uniqueVisitedCells / totalAvailableCells) * 100).toFixed(1);
+
+        // Обновление заголовка
+        document.querySelector("h1").textContent = `Лабиринт "${progress}%"`;
+    } else {
+        // Если лабиринт еще не найден, показываем стандартный заголовок
+        document.querySelector("h1").textContent = "Лабиринт";
+    }
 }
 
 initMaze();
