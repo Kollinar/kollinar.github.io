@@ -460,7 +460,21 @@ function initMaze() {
     labyrinthStartCandidate = null;
     render(); //рендер карты
 }
+// Функция для сохранения максимального процента для конкретного лабиринта
+function saveMaxProgress(mazeIndex, progress) {
+    const key = `mazeProgress_${mazeIndex}`;
+    const savedProgress = localStorage.getItem(key);
+    if (!savedProgress || progress > parseFloat(savedProgress)) {
+        localStorage.setItem(key, progress); // Сохраняем новый максимум
+    }
+}
 
+// Функция для получения сохраненного максимального процента для конкретного лабиринта
+function getMaxProgress(mazeIndex) {
+    const key = `mazeProgress_${mazeIndex}`;
+    const savedProgress = localStorage.getItem(key);
+    return savedProgress ? parseFloat(savedProgress) : 0; // Если нет данных, возвращаем 0
+}
 
 function move(dx, dy) {
     let curr = cumulativePath[cumulativePath.length - 1];
@@ -665,8 +679,15 @@ function render() {
         // Вычисление процента
         let progress = ((uniqueVisitedCells / totalAvailableCells) * 100).toFixed(1);
 
+		// Сохранение максимального прогресса
+        const currentMazeIndex = mazeOptions.indexOf(matchedMaze);
+        saveMaxProgress(currentMazeIndex, progress);
+
+        // Загрузка максимального прогресса
+        const maxProgress = getMaxProgress(currentMazeIndex);
+
         // Обновление заголовка
-        document.querySelector("h1").textContent = `Лабиринт "${progress}%"`;
+        document.querySelector("h1").textContent = `Лабиринт "${progress}%" (MAX:${maxProgress}%)`;
     } else {
         // Если лабиринт еще не найден, показываем стандартный заголовок
         document.querySelector("h1").textContent = "Лабиринт";
