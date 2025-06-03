@@ -461,8 +461,10 @@ function initMaze() {
     render(); //рендер карты
 }
 // Функция для сохранения максимального процента для конкретного лабиринта
-function saveMaxProgress(mazeIndex, progress) {
-    const key = `mazeProgress_${mazeIndex}`;
+function saveMaxProgress(maze, progress) {
+    // Преобразуем лабиринт в строку для уникального ключа
+    const mazeString = JSON.stringify(maze);
+    const key = `mazeProgress_${mazeString}`;
     const savedProgress = localStorage.getItem(key);
     if (!savedProgress || progress > parseFloat(savedProgress)) {
         localStorage.setItem(key, progress); // Сохраняем новый максимум
@@ -470,8 +472,10 @@ function saveMaxProgress(mazeIndex, progress) {
 }
 
 // Функция для получения сохраненного максимального процента для конкретного лабиринта
-function getMaxProgress(mazeIndex) {
-    const key = `mazeProgress_${mazeIndex}`;
+function getMaxProgress(maze) {
+    // Преобразуем лабиринт в строку для уникального ключа
+    const mazeString = JSON.stringify(maze);
+    const key = `mazeProgress_${mazeString}`;
     const savedProgress = localStorage.getItem(key);
     return savedProgress ? parseFloat(savedProgress) : 0; // Если нет данных, возвращаем 0
 }
@@ -672,22 +676,21 @@ function render() {
     if (matchedMaze && labyrinthStartCandidate) {
         // Подсчет доступных клеток (где значение 0)
         let totalAvailableCells = matchedMaze.flat().filter(cell => cell === 0).length;
-
+    
         // Подсчет уникальных пройденных клеток
         let uniqueVisitedCells = new Set(cumulativePath.map(([x, y]) => `${x},${y}`)).size;
-
+    
         // Вычисление процента
         let progress = ((uniqueVisitedCells / totalAvailableCells) * 100).toFixed(1);
-
-		// Сохранение максимального прогресса
-        const currentMazeIndex = mazeOptions.indexOf(matchedMaze);
-        saveMaxProgress(currentMazeIndex, progress);
-
+    
+        // Сохранение максимального прогресса
+        saveMaxProgress(matchedMaze, progress);
+    
         // Загрузка максимального прогресса
-        const maxProgress = getMaxProgress(currentMazeIndex);
-
+        const maxProgress = getMaxProgress(matchedMaze);
+    
         // Обновление заголовка
-        document.querySelector("h1").textContent = `Лабиринт "${progress}%" (MAX:${maxProgress}%)`;
+        document.querySelector("h1").textContent = `Лабиринт "${progress}%" (MAX: ${maxProgress}%)`;
     } else {
         // Если лабиринт еще не найден, показываем стандартный заголовок
         document.querySelector("h1").textContent = "Лабиринт";
