@@ -857,6 +857,10 @@ function render() {
         // Если лабиринт еще не найден, показываем стандартный заголовок
         document.querySelector("h1").textContent = "Лабиринт";
     }
+		// Если карта найдена, обновляем выделение
+    if (matchedMaze && labyrinthStartCandidate) {
+        renderHighlight();
+    }
 }
 
 initMaze();
