@@ -267,6 +267,67 @@ h1 {
   }
 	
 }
+
+/* Если нужно убрать выделение */
+.reset-highlight {
+  border: none; /* Убираем границы */
+}
+
+.highlight-controls {
+  display: grid;
+  grid-template-columns: repeat(3, auto); /* 3 кнопки в ряд */
+  grid-template-rows: repeat(3, auto); /* 3 строки */
+  gap: 5px; /* Расстояние между кнопками */
+  justify-content: center; /* Центрирование кнопок */
+  margin: 10px 0; /* Отступы сверху и снизу */
+}
+
+.highlight-controls .north {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.highlight-controls .west {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+.highlight-controls .east {
+  grid-row: 2;
+  grid-column: 3;
+}
+
+.highlight-controls .south {
+  grid-row: 3;
+  grid-column: 2;
+}
+
+.highlight-controls button {
+  appearance: none;
+  background-color: transparent;
+  border: 2px solid #3498db;
+  border-radius: 0.6em;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.5em 1em;
+  text-align: center;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.highlight-controls button:hover {
+  background-color: #3498db;
+  color: white;
+}
+
+/* Стиль для выделения */
+.cell.highlight {
+  border: 2px solid #70bcff !important; /* Принудительно применяем стиль */
+  box-sizing: border-box; /* Учитываем границы в размерах */
+}
+	  
   </style>
 </head>
 <body>
@@ -449,6 +510,8 @@ let cumulativePath = [[9, 9]]; // Начальная точка установл
 let matchedMaze = null;
 let labyrinthStartCandidate = null; // найденная начальная позиция на лабиринте
 let sourcePosition = null; // Глобальная переменная для хранения позиции источника
+let highlightStartX = {Direction: null, x: null, y: null}; // Глобальная переменная для хранения текущего направления выделения и кординат по X
+let highlightStartY = {Direction: null, x: null, y: null}; // Глобальная переменная для хранения текущего направления выделения и кординат по Y
 
 function initMaze() {
 	maze = [];
@@ -458,6 +521,7 @@ function initMaze() {
     cumulativePath = [[9, 9]]; // Устанавливаем начальную точку в центр карты (9,9)
     matchedMaze = null; // Сбрасываем найденый лбиринт
     labyrinthStartCandidate = null;
+    clearHighlights();
     render(); //рендер карты
 }
 // Функция для сохранения максимального процента для конкретного лабиринта
@@ -506,6 +570,96 @@ function move(dx, dy) {
     render();
 }
 
+// Функция для очистки всех выделений
+function clearHighlights(direction) {
+    const mazeEl = document.getElementById("maze");
+    const cells = mazeEl.children;
+    for (let cell of cells) {
+        cell.classList.remove("highlight"); // Убираем класс выделения
+    }
+	if (!direction) {
+	highlightStartX = {Direction: null, x: null, y: null}; // Очистка Начальная позиция выделения и направление по X
+	highlightStartY = {Direction: null, x: null, y: null}; // Очистка Начальная позиция выделения и направление по Y	
+	}
+}
+// Установка границ и направления выделения
+function setHighlight(direction) {
+    // Проверяем, что карта найдена
+    if (!matchedMaze || !labyrinthStartCandidate) return;
+	let lastPos = cumulativePath[cumulativePath.length - 1];
+	let startX = labyrinthStartCandidate[0] + (lastPos[0] - 9); // Сохраняем начальную X-координату	
+	let startY = labyrinthStartCandidate[1] + (lastPos[1] - 9); // Сохраняем начальную Y-координату
+		
+    // Устанавливаем новое направление выделения
+	if (["up", "down"].includes(direction)) {
+        highlightStartY.Direction = direction;
+        highlightStartY.x = startX;
+        highlightStartY.y = startY;
+    } 
+    
+    if (["left", "right"].includes(direction)) {
+        highlightStartX.Direction = direction;
+        highlightStartX.x = startX;
+        highlightStartX.y = startY;
+    }
+
+    renderHighlight();
+}
+// Вызов функции отрисовки
+function renderHighlight() {
+    // Вызываем функцию для обновления выделения только если highlightStartX установлено
+    if (highlightStartX.Direction) {
+        updateHighlights(highlightStartX.Direction, highlightStartX.x, highlightStartX.y);
+    }
+    if (highlightStartY.Direction) {
+        updateHighlights(highlightStartY.Direction, highlightStartY.x, highlightStartY.y);
+    }
+}
+
+// Отрисовка выделения клеток выхода
+function updateHighlights(direction, startX, startY) {
+	if (!direction) return; // Защита от undefined/null
+	
+    const mazeEl = document.getElementById("maze");
+    const cells = mazeEl.children;
+	const size = 18; // Размер сетки
+    const steps = 3;  // Сколько ячеек выделять
+		
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < steps; j++) {
+            let row, col;
+
+            // Определяем координаты в зависимости от направления
+            switch (direction) {
+                case "up":
+                    row = startX - j - 1;
+                    col = i;
+                    break;
+                case "down":
+                    row = startX + j + 1;
+                    col = i;
+                    break;
+                case "left":
+                    row = i;
+                    col = startY - j - 1;
+                    break;
+                case "right":
+                    row = i;
+                    col = startY + j + 1;
+                    break;
+                default:
+                    continue;
+            }
+
+            // Проверяем границы и добавляем подсветку
+            if (row >= 0 && row < size && col >= 0 && col < size) {
+                cells[row * size + col].classList.add("highlight");
+            }
+        }
+    }
+}
+
+// Функция проверка лабиринта на совпадения с путем	  
 function checkMatch() {
     if (matchedMaze) return;
     const candidates = [];
@@ -539,7 +693,7 @@ function checkMatch() {
 		render();
 	}
 }
-
+// Выход рисует ближайшие не занятые клетки
 function markExit() {
     if (!matchedMaze || !labyrinthStartCandidate) return;
     
@@ -570,7 +724,7 @@ function markExit() {
         render();
     }
 }
-
+// Источник на отрисованой карте
 function markSource() {
     if (!matchedMaze || !labyrinthStartCandidate) return;
     
@@ -590,11 +744,11 @@ function markSource() {
         }
     }
 }
-
+// Ресет лабиринта
 function resetGame() {
     initMaze();
 }
-
+// отрисовка лабиринта
 function render() {
     const mazeEl = document.getElementById("maze");
 
