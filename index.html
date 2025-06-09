@@ -359,7 +359,15 @@ h1 {
           <button class="east" onclick="move(0, 1)">Восток</button>
           <button class="south" onclick="move(1, 0)">Юг</button>
         </div>
-
+	      
+	<!-- Новые кнопки для выделения линий -->
+	<div class="highlight-controls">
+		<button class="north" onclick="setHighlight('up')">⇑</button>
+		<button class="south" onclick="setHighlight('down')">⇓</button>
+		<button class="west" onclick="setHighlight('left')">⇐</button>
+		<button class="east" onclick="setHighlight('right')">⇒</button>
+	</div>
+	      
         <!-- Действия -->
         <div class="actions">
           <button class="markSource" onclick="markSource()">Источник</button>
